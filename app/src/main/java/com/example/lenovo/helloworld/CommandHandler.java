@@ -12,15 +12,15 @@ import java.io.InputStream;
  * description：adb Command 处理类
  */
 
-public class SystemManager {
-    private static final String TAG = "SystemManager";
-    public static volatile SystemManager manager;
+public class CommandHandler {
+    private static final String TAG = "CommandHandler";
+    public static volatile CommandHandler manager;
 
-    public static SystemManager getInstance() {
+    public static CommandHandler getInstance() {
         if (manager == null) {
-            synchronized (SystemManager.class) {
+            synchronized (CommandHandler.class) {
                 if (manager == null) {
-                    manager = new SystemManager();
+                    manager = new CommandHandler();
                 }
             }
         }

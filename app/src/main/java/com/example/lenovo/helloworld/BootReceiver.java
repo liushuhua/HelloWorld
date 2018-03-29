@@ -8,7 +8,6 @@ import android.content.Intent;
  * description：开机App自动启动的接收器
  */
 public class BootReceiver extends BroadcastReceiver {
-    private static final String TAG = "BootReceiver";
     static final String ACTION = "android.intent.action.BOOT_COMPLETED";
 
     @Override
