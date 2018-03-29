@@ -67,7 +67,32 @@
         <service
             android:name=".alive.GrayService"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="false"
+            android:process=":gray" />
+        <service
+            android:name=".alive.GrayService$GrayInnerService"
+            android:enabled="true"
+            android:exported="false"
+            android:process=":gray" />
+
+        <receiver
+            android:name=".alive.WakeReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.wake.gray" />
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name=".alive.WakeReceiver$WakeNotifyService"
+            android:enabled="true"
+            android:exported="false" />
+
+        <service
+            android:name=".alive.WakeReceiver$WakeGrayInnerService"
+            android:enabled="true"
+            android:exported="false" />
     </application>
 
 </manifest>

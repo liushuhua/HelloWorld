@@ -1,23 +1,31 @@
 package com.example.lenovo.helloworld;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
 import com.example.lenovo.helloworld.alive.AliveService;
+import com.example.lenovo.helloworld.alive.GrayService;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Created by LSH on 2018/3/27.
@@ -32,9 +40,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        findViewById(R.id.textview).setOnClickListener(this);
-        findViewById(R.id.test).setOnClickListener(this);
-        startService(AliveService.getIntentStart(this));
+        findViewById(R.id.install).setOnClickListener(this);
+        findViewById(R.id.process).setOnClickListener(this);
+        findViewById(R.id.wifi).setOnClickListener(this);
+        findViewById(R.id.root).setOnClickListener(this);
+//        startService(AliveService.getIntentStart(this));
     }
 
     @Override
@@ -42,22 +52,39 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onResume();
     }
 
+    @SuppressLint("StaticFieldLeak")
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.textview:
+            case R.id.install:
                 if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                     ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
                 } else {
                     installApp();
                 }
+//                silentInstallApp();
                 break;
-            case R.id.test:
+            case R.id.process:
+                Intent grayIntent = new Intent(getApplicationContext(), GrayService.class);
+                startService(grayIntent);
+                break;
 
+            case R.id.wifi:
+                Intent intent = new Intent(Settings.ACTION_WIFI_SETTINGS);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+                break;
+            case R.id.root:
+//                SystemManager.getInstance().execRootCommand("cat /data/misc/wifi/wpa_supplicant.conf");
+//                SystemManager.getInstance().execRootCommand("pm install -r /sdcard/Download/app-release.apk");
+//                SystemManager.getInstance().execCommand("cat /sys/class/net/wlan0/address");
                 break;
         }
     }
 
+    /**
+     * 普通的安装
+     */
     private void installApp() {
         File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "app-release.apk");
         Intent intent = new Intent(Intent.ACTION_VIEW);
@@ -73,6 +100,37 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             intent.setDataAndType(Uri.fromFile(file), "application/vnd.android.package-archive");
         }
         startActivity(intent);
+    }
+
+    private boolean silentInstallApp() {
+        Process process = null;
+        try {
+            process = Runtime.getRuntime().exec(new String[]{"su", "-c", "pm install -r /sdcard/Download/app-release.apk"});
+            process.waitFor();
+            InputStream inputStream = process.getInputStream();
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            int read;
+            while ((read = inputStream.read()) != -1) {
+                byteArrayOutputStream.write(read);
+            }
+            byte[] data = byteArrayOutputStream.toByteArray();
+            String result = new String(data);
+            Log.i(TAG, "execRootCommand: " + result);
+            inputStream.close();
+            byteArrayOutputStream.close();
+            if ("success".equals(result.toLowerCase())) {
+                return true;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            if (process != null) {
+                process.destroy();
+            }
+        }
+        return false;
     }
 
     @Override
