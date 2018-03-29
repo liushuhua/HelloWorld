@@ -1,6 +1,10 @@
 package com.example.lenovo.helloworld;
 
+import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
+import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
@@ -39,7 +43,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.install:
-                silentInstallApp();
+                installApp();
                 break;
             case R.id.process:
                 Intent grayIntent = new Intent(getApplicationContext(), GrayService.class);
@@ -59,6 +63,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    /**
+     * app安装,耗时操作启动线程执行
+     */
+    @SuppressLint("StaticFieldLeak")
+    private void installApp() {
+        new AsyncTask<String, String, Boolean>() {
+            @Override
+            protected Boolean doInBackground(String... strings) {
+                return silentInstallApp();
+            }
+
+            @Override
+            protected void onPostExecute(Boolean aBoolean) {
+                super.onPostExecute(aBoolean);
+                if (aBoolean) {
+                    Log.e(TAG, "onPostExecute: 成功");
+                }
+            }
+        }.execute();
+    }
+
+    /**
+     * root权限下的静默安装
+     *
+     * @return 安装状态
+     */
     private boolean silentInstallApp() {
         Process process = null;
         try {
@@ -75,7 +105,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Log.i(TAG, "execRootCommand: " + result);
             inputStream.close();
             byteArrayOutputStream.close();
-            if ("success".equals(result.toLowerCase())) {
+            if (result.toLowerCase().contains("success")) {
                 return true;
             }
         } catch (IOException e) {
@@ -88,5 +118,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
         return false;
+    }
+
+
+    /**
+     * 打开Wifi开关
+     */
+    public void openWifi() {
+        WifiManager wm = (WifiManager) MainActivity.this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        if (wm != null && !wm.isWifiEnabled()) {
+            wm.setWifiEnabled(true);
+        }
+
+    }
+
+    /**
+     * 打开手机数据开关,root为前提
+     */
+    public void openMobileData() {
+       CommandHandler.getInstance().execRootCommand("svc data enable");
     }
 }
