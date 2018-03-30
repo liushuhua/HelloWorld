@@ -1,6 +1,5 @@
 package com.example.lenovo.helloworld;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.net.wifi.WifiManager;
@@ -60,22 +59,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     /**
      * app安装,耗时操作启动线程执行
      */
-    @SuppressLint("StaticFieldLeak")
     private void installApp() {
-        new AsyncTask<String, String, Boolean>() {
-            @Override
-            protected Boolean doInBackground(String... strings) {
-                return silentInstallApp();
-            }
-
-            @Override
-            protected void onPostExecute(Boolean aBoolean) {
-                super.onPostExecute(aBoolean);
-                if (aBoolean) {
-                    Log.e(TAG, "onPostExecute: 成功");
-                }
-            }
-        }.execute();
+        InstallTask task = new InstallTask();
+        task.execute();
     }
 
     /**
@@ -83,7 +69,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      *
      * @return 安装状态
      */
-    private boolean silentInstallApp() {
+    private static boolean silentInstallApp() {
         Process process = null;
         try {
             process = Runtime.getRuntime().exec(new String[]{"su", "-c", "pm install -r /sdcard/Download/app-release.apk"});
@@ -131,5 +117,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      */
     public void openMobileData() {
         CommandHandler.getInstance().execRootCommand("svc data enable");
+    }
+
+    /**
+     * 安装任务
+     */
+    private static class InstallTask extends AsyncTask<Void,Void,Boolean> {
+
+        @Override
+        protected Boolean doInBackground(Void... voids) {
+            return silentInstallApp();
+        }
+
+        @Override
+            protected void onPostExecute(Boolean aBoolean) {
+                super.onPostExecute(aBoolean);
+                if (aBoolean) {
+                    Log.e(TAG, "onPostExecute: 成功");
+                }
+            }
     }
 }
