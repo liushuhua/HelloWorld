@@ -14,7 +14,7 @@ import java.io.InputStream;
 
 public class CommandHandler {
     private static final String TAG = "CommandHandler";
-    public static volatile CommandHandler manager;
+    private static volatile CommandHandler manager;
 
     public static CommandHandler getInstance() {
         if (manager == null) {
